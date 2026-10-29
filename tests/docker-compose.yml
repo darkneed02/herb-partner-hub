@@ -1,0 +1,36 @@
+name: herb-partner-hub-test
+services:
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: wp
+      MARIADB_USER: wp
+      MARIADB_PASSWORD: wp
+  wp:
+    image: wordpress:php8.2-apache
+    depends_on: [db]
+    ports: ["8090:80"]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp
+      WORDPRESS_DB_NAME: wp
+    volumes:
+      - wpdata:/var/www/html
+      - ../herb-partner-hub:/var/www/html/wp-content/plugins/herb-partner-hub
+  cli:
+    image: wordpress:cli-php8.2
+    depends_on: [wp]
+    user: "33:33"
+    entrypoint: ["sleep", "infinity"]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp
+      WORDPRESS_DB_NAME: wp
+    volumes:
+      - wpdata:/var/www/html
+      - ../herb-partner-hub:/var/www/html/wp-content/plugins/herb-partner-hub
+volumes:
+  wpdata:

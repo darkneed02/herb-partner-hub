@@ -1,0 +1,36 @@
+# Build output: the release zip is made from herb-partner-hub/, never tracked
+*.zip
+/dist/
+/build/
+
+# Dependencies
+/vendor/
+node_modules/
+
+# Local config and secrets
+.env
+.env.*
+!.env.example
+*.local.php
+wp-config.php
+auth.json
+*.pem
+*.key
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Logs, dumps, test leftovers
+*.log
+*.sql
+*.sql.gz
+.phpunit.result.cache
+tests/.cache/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~

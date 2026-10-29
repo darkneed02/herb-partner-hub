@@ -1,0 +1,510 @@
+/* Herb Partner Hub — admin screens. WP core look, plus the few pieces the plan's
+   mockups add: status tags, a main + sidebar layout, boxes and key/value lists. */
+
+.hph-tag {
+	display: inline-block;
+	border-radius: 3px;
+	padding: 1px 7px;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.6;
+	white-space: nowrap;
+	background: #f0f0f1;
+	color: #50575e;
+}
+
+.hph-tag--g { background: #edfaef; color: #007017; }
+.hph-tag--y { background: #fcf9e8; color: #8a6d00; }
+.hph-tag--r { background: #fcf0f1; color: #b32d2e; }
+.hph-tag--b { background: #f0f6fc; color: #135e96; }
+
+.wrap h1 .hph-tag {
+	vertical-align: middle;
+	margin-left: 6px;
+	font-size: 13px;
+}
+
+/* main + sidebar */
+.hph-two {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) clamp(280px, 26%, 380px);
+	gap: 16px;
+	align-items: start;
+	margin-top: 12px;
+}
+
+.hph-side {
+	display: grid;
+	gap: 16px;
+}
+
+.hph-box {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	padding: 0 14px 14px;
+}
+
+.hph-box h2 {
+	font-size: 14px;
+	font-weight: 600;
+	margin: 0 -14px 12px;
+	padding: 10px 14px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.hph-box > :last-child {
+	margin-bottom: 0;
+}
+
+.hph-box .button {
+	width: 100%;
+	text-align: center;
+	justify-content: center;
+}
+
+.hph-box .button + .button {
+	margin-top: 8px;
+}
+
+.hph-box textarea {
+	width: 100%;
+}
+
+.hph-box .description {
+	margin: 4px 0 10px;
+}
+
+.hph-button-danger.button {
+	color: #b32d2e;
+	border-color: #b32d2e;
+}
+
+.hph-button-danger.button:hover,
+.hph-button-danger.button:focus {
+	color: #8a2424;
+	border-color: #8a2424;
+	background: #fcf0f1;
+}
+
+/* Applicant facts: label above value, as many columns as the box has room for. */
+.hph-two > .hph-box {
+	container-type: inline-size;
+}
+
+.hph-facts {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 14px 20px;
+	margin: 0 0 16px;
+}
+
+.hph-facts .is-wide {
+	grid-column: 1 / -1;
+}
+
+.hph-facts dt {
+	color: #646970;
+	font-size: 12px;
+	margin-bottom: 2px;
+}
+
+.hph-facts dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+@container (max-width: 620px) {
+	.hph-facts {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@container (max-width: 380px) {
+	.hph-facts {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.hph-box h2.hph-box__sub {
+	border-top: 1px solid #f0f0f1;
+}
+
+.hph-box .button.hph-button-auto {
+	width: auto;
+}
+
+.hph-log {
+	margin: 0;
+}
+
+.hph-log li {
+	margin-bottom: 10px;
+}
+
+.hph-log li:last-child {
+	margin-bottom: 0;
+}
+
+.hph-log strong,
+.hph-log em {
+	display: block;
+}
+
+.hph-box .hph-log .description {
+	margin: 0;
+}
+
+.hph-log em {
+	margin-top: 4px;
+	padding-left: 8px;
+	border-left: 2px solid #dcdcde;
+}
+
+.hph-check {
+	display: flex;
+	gap: 6px;
+	align-items: flex-start;
+	margin: 10px 0 12px;
+}
+
+.hph-check input {
+	margin-top: 2px;
+}
+
+/* lists */
+.hph-table .column-status,
+.hph-table .column-joined {
+	width: 130px;
+}
+
+/* Joined switch on the Products screen: a styled checkbox, so the form posts as before. */
+.hph-switch {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.hph-switch input[type="checkbox"] {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.hph-switch__track {
+	position: relative;
+	flex: none;
+	width: 36px;
+	height: 20px;
+	border-radius: 10px;
+	background: #8c8f94;
+	transition: background-color 0.15s;
+}
+
+.hph-switch__track::after {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+	transition: transform 0.15s;
+}
+
+.hph-switch input:checked ~ .hph-switch__track {
+	background: #00a32a;
+}
+
+.hph-switch input:checked ~ .hph-switch__track::after {
+	transform: translateX(16px);
+}
+
+.hph-switch input:focus-visible ~ .hph-switch__track {
+	box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2271b1;
+}
+
+.hph-switch__on {
+	color: #007017;
+}
+
+.hph-switch__off {
+	color: #646970;
+}
+
+.hph-switch input:checked ~ .hph-switch__off,
+.hph-switch input:not(:checked) ~ .hph-switch__on {
+	display: none;
+}
+
+.hph-switch-note {
+	display: block;
+	margin-top: 4px;
+	font-size: 12px;
+	color: #8a6d00;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hph-switch__track,
+	.hph-switch__track::after {
+		transition: none;
+	}
+}
+
+.hph-table td .hph-money {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.hph-table td .hph-money input {
+	width: 86px;
+}
+
+.hph-table tr.hph-child td:nth-child(2) {
+	padding-left: 34px;
+}
+
+.hph-table tr.hph-child[hidden] {
+	display: none;
+}
+
+.hph-table .row-actions {
+	position: static;
+	left: auto;
+}
+
+.hph-table .hph-missing input {
+	border-color: #d63638;
+}
+
+.hph-history {
+	margin-top: 6px;
+	font-size: 12px;
+	color: #50575e;
+}
+
+.hph-history summary {
+	cursor: pointer;
+	color: #2271b1;
+}
+
+.hph-history ul {
+	margin: 6px 0 0;
+}
+
+.hph-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 10px 0;
+}
+
+.hph-toolbar .hph-search {
+	margin-left: auto;
+	display: flex;
+	gap: 6px;
+}
+
+.hph-import[hidden] {
+	display: none;
+}
+
+.hph-import {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	padding: 12px 14px;
+	margin: 12px 0;
+	max-width: 760px;
+}
+
+.hph-save-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	align-items: center;
+	margin-top: 14px;
+}
+
+.hph-sources {
+	margin: 0;
+}
+
+.hph-sources li {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin-bottom: 6px;
+}
+
+/* Overview */
+.hph-ov-head {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 12px 0 16px;
+}
+
+.hph-cards {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.hph-cards .hph-box {
+	display: grid;
+	align-content: start;
+	padding: 12px 14px;
+}
+
+.hph-cards .hph-box .description {
+	margin: 0;
+}
+
+.hph-cards__v {
+	font-size: 26px;
+	font-weight: 600;
+	line-height: 1.3;
+	color: #1d2327;
+	text-decoration: none;
+}
+
+a.hph-cards__v.is-alert {
+	color: #b32d2e;
+}
+
+.hph-chart {
+	display: flex;
+	align-items: flex-end;
+	gap: 12px;
+	height: 170px;
+	border-bottom: 1px solid #dcdcde;
+	padding-top: 8px;
+}
+
+.hph-chart__col {
+	flex: 1;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	color: #646970;
+	min-width: 0;
+}
+
+.hph-chart__col i {
+	display: block;
+	width: 100%;
+	max-width: 80px;
+	background: #2271b1;
+	opacity: 0.45;
+}
+
+.hph-chart__col.is-now i {
+	opacity: 1;
+}
+
+.hph-chart__col.is-now a {
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.hph-chart__col a {
+	text-decoration: none;
+	padding-top: 4px;
+	white-space: nowrap;
+}
+
+.hph-chart__v {
+	white-space: nowrap;
+}
+
+.wrap > .hph-box {
+	margin-bottom: 16px;
+}
+
+.hph-rank {
+	max-width: 960px;
+}
+
+.hph-rank td {
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
+
+.wrap .tablenav.hph-rank-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+	align-items: center;
+	justify-content: space-between;
+	max-width: 960px;
+	height: auto;
+	margin: 6px 0 24px;
+}
+
+.hph-rank-nav .tablenav-pages {
+	float: none;
+	margin: 0;
+}
+
+@media (max-width: 782px) {
+	.hph-rank th,
+	.hph-rank td {
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+
+	.hph-rank th.num {
+		white-space: normal;
+	}
+
+	.hph-rank .description {
+		overflow-wrap: anywhere;
+	}
+}
+
+.hph-per-page {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.hph-rank .num {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.hph-rank .description {
+	display: block;
+}
+
+@media (max-width: 960px) {
+	.hph-two {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.hph-cards {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.hph-chart__v {
+		display: none;
+	}
+
+}

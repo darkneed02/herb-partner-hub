@@ -1,0 +1,1077 @@
+/* Herb Partner Hub — storefront screens (application form, dropshipper bar and prices,
+   set-password page). Self-contained: does not rely on the theme's CSS. Tokens follow the
+   stherb.com design system used in the plan's mockups. */
+
+.hph,
+.hph-bar,
+.hph-price {
+	--hph-ground: #F7F1E6;
+	--hph-surface: #FFFFFF;
+	--hph-soft: #F1EADC;
+	--hph-ink: #221E18;
+	--hph-ink2: #554C40;
+	--hph-muted: #7A7163;
+	--hph-border: #E7DECF;
+	--hph-accent: #1C6FAB;
+	--hph-accent-ink: #FFFFFF;
+	--hph-accent-soft: #E7F0F7;
+	--hph-ok: #2E7A4D;
+	--hph-ok-soft: #E3F1E8;
+	--hph-bad: #A73636;
+	--hph-bad-soft: #F7E3E1;
+	--hph-display: "Cormorant", "Noto Serif Thai", Georgia, serif;
+	--hph-body: "Mulish", "IBM Plex Sans Thai", system-ui, -apple-system, sans-serif;
+}
+
+.hph {
+	font-family: var(--hph-body);
+	color: var(--hph-ink);
+	line-height: 1.6;
+	box-sizing: border-box;
+}
+
+.hph *,
+.hph *::before,
+.hph *::after {
+	box-sizing: inherit;
+}
+
+/* ---------- panel + headings ---------- */
+.hph-panel {
+	background: var(--hph-ground);
+	border-radius: 16px;
+	padding: clamp(20px, 4vw, 36px);
+}
+
+.hph-plain {
+	background: transparent;
+	padding: 0;
+}
+
+.hph-head {
+	display: grid;
+	gap: 6px;
+	margin: 0 0 22px;
+}
+
+.hph-title {
+	font-family: var(--hph-display);
+	font-size: clamp(28px, 3.4vw, 36px);
+	font-weight: 700;
+	line-height: 1.1;
+	margin: 0;
+	color: var(--hph-ink);
+}
+
+.hph-intro,
+.hph-muted {
+	font-size: 14.5px;
+	color: var(--hph-muted);
+	margin: 0;
+}
+
+/* ---------- form ---------- */
+.hph-form {
+	display: grid;
+	gap: 18px;
+	margin: 0;
+}
+
+.hph-grid2 {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: start;
+	gap: 16px;
+}
+
+.hph-fld {
+	display: grid;
+	align-content: start;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+.hph-fld > label,
+.hph-fld > legend,
+.hph-label {
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	color: var(--hph-ink2);
+	padding: 0;
+	margin: 0;
+}
+
+.hph-req {
+	color: var(--hph-accent);
+}
+
+.hph input[type="text"],
+.hph input[type="email"],
+.hph input[type="tel"],
+.hph input[type="url"],
+.hph input[type="password"],
+.hph select,
+.hph textarea {
+	width: 100%;
+	max-width: 100%;
+	min-height: 44px;
+	background: var(--hph-surface);
+	border: 1px solid var(--hph-border);
+	border-radius: 10px;
+	padding: 10px 14px;
+	font: inherit;
+	font-size: 15px;
+	line-height: 1.4;
+	color: var(--hph-ink);
+	box-shadow: none;
+	margin: 0;
+}
+
+.hph textarea {
+	min-height: 110px;
+	resize: vertical;
+}
+
+.hph input[readonly] {
+	background: var(--hph-soft);
+	color: var(--hph-ink2);
+}
+
+.hph input:focus,
+.hph select:focus,
+.hph textarea:focus {
+	outline: none;
+	border-color: var(--hph-accent);
+	box-shadow: 0 0 0 3px rgba(28, 111, 171, 0.15);
+}
+
+.hph ::placeholder {
+	color: #B4A88F;
+	opacity: 1;
+}
+
+.hph [aria-invalid="true"] {
+	border-color: var(--hph-bad);
+}
+
+.hph-hint {
+	font-size: 12.5px;
+	color: var(--hph-muted);
+	margin: 0;
+}
+
+.hph-error {
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--hph-bad);
+	margin: 0;
+}
+
+.hph a {
+	color: var(--hph-accent);
+}
+
+/* chips: checkbox list shown as toggle pills */
+.hph-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 2px;
+}
+
+.hph-chip {
+	position: relative;
+	display: inline-flex;
+	cursor: pointer;
+}
+
+.hph-chip input {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+}
+
+.hph-chip span {
+	display: inline-block;
+	border: 1px solid var(--hph-border);
+	border-radius: 999px;
+	padding: 6px 14px;
+	font-size: 14px;
+	font-weight: 600;
+	background: var(--hph-surface);
+	color: var(--hph-ink2);
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.hph-chip:hover span {
+	border-color: var(--hph-accent);
+}
+
+.hph-chip input:checked + span {
+	border-color: var(--hph-accent);
+	background: var(--hph-accent-soft);
+	color: var(--hph-accent);
+}
+
+.hph-chip input:checked + span::before {
+	content: "\2713\00a0";
+}
+
+.hph-chip input:focus-visible + span,
+.hph-agree input:focus-visible {
+	outline: 2px solid var(--hph-accent);
+	outline-offset: 2px;
+}
+
+.hph-agree {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	font-size: 14px;
+	color: var(--hph-ink);
+	cursor: pointer;
+	margin: 0;
+}
+
+.hph-agree input {
+	width: 18px;
+	height: 18px;
+	margin: 2px 0 0;
+	accent-color: var(--hph-accent);
+	flex-shrink: 0;
+}
+
+/* ---------- buttons ---------- */
+.hph .hph-btn,
+.hph button.hph-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	justify-self: start;
+	font: inherit;
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.2;
+	border-radius: 999px;
+	padding: 13px 28px;
+	border: 1px solid var(--hph-accent);
+	background: var(--hph-accent);
+	color: var(--hph-accent-ink);
+	cursor: pointer;
+	text-decoration: none;
+	transition: background 0.15s ease;
+}
+
+.hph .hph-btn:hover {
+	background: #155A8C;
+	border-color: #155A8C;
+	color: var(--hph-accent-ink);
+}
+
+.hph .hph-btn:focus-visible {
+	outline: 2px solid var(--hph-accent);
+	outline-offset: 3px;
+}
+
+/* ---------- notices ---------- */
+.hph-notice {
+	border-radius: 12px;
+	padding: 14px 18px;
+	font-size: 14.5px;
+	line-height: 1.6;
+	border: 1px solid var(--hph-border);
+	background: var(--hph-surface);
+}
+
+.hph-notice--success {
+	border-color: var(--hph-ok);
+	background: var(--hph-ok-soft);
+}
+
+.hph-notice--error {
+	border-color: var(--hph-bad);
+	background: var(--hph-bad-soft);
+}
+
+.hph-notice--info {
+	background: var(--hph-accent-soft);
+	border-color: var(--hph-accent-soft);
+}
+
+.hph-login {
+	font-size: 14px;
+	color: var(--hph-ink2);
+	background: var(--hph-soft);
+	border-radius: 10px;
+	padding: 10px 14px;
+	margin: 0;
+}
+
+.hph-hp {
+	position: absolute !important;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+/* ---------- dropshipper bar (all shop pages) ---------- */
+.hph-bar {
+	font-family: var(--hph-body);
+	background: var(--hph-soft);
+	color: var(--hph-ink2);
+	font-size: 13.5px;
+	line-height: 1.5;
+	padding: 9px 16px;
+	text-align: center;
+	border-bottom: 1px solid var(--hph-border);
+}
+
+.hph-bar b {
+	color: var(--hph-ink);
+}
+
+.hph-tag {
+	display: inline-block;
+	background: var(--hph-accent-soft);
+	color: var(--hph-accent);
+	border-radius: 999px;
+	padding: 1px 10px;
+	margin-right: 8px;
+	font-size: 11.5px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	vertical-align: 1px;
+}
+
+/* ---------- prices ---------- */
+.hph-price {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: inherit;
+	gap: 4px 8px;
+	font-family: var(--hph-body);
+}
+
+.hph-price__ws {
+	font-size: 1.25em;
+	font-weight: 800;
+	color: var(--hph-accent);
+	font-variant-numeric: tabular-nums;
+}
+
+.hph-price__retail {
+	font-size: 0.85em;
+	color: var(--hph-muted);
+	text-decoration: line-through;
+}
+
+/* ---------- set password ---------- */
+.hph-setpw {
+	max-width: 460px;
+	margin: 0 auto;
+}
+
+.hph-setpw .woocommerce-password-strength {
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 700;
+	margin-top: 6px;
+}
+
+/* ---------- small helpers ---------- */
+.hph b,
+.hph strong {
+	font-weight: 800;
+}
+
+.hph-small {
+	font-size: 13px;
+}
+
+.hph-block {
+	display: block;
+}
+
+.hph-r {
+	text-align: right;
+}
+
+.hph-num {
+	font-variant-numeric: tabular-nums;
+}
+
+.hph .hph-btn--sm,
+.hph button.hph-btn--sm {
+	font-size: 13px;
+	padding: 7px 16px;
+}
+
+.hph .hph-btn--ghost,
+.hph button.hph-btn--ghost {
+	background: var(--hph-surface);
+	color: var(--hph-accent);
+	border-color: var(--hph-border);
+}
+
+.hph .hph-btn--ghost:hover,
+.hph button.hph-btn--ghost:hover {
+	background: var(--hph-accent-soft);
+	border-color: var(--hph-accent);
+	color: var(--hph-accent);
+}
+
+.hph .hph-btn--danger,
+.hph .hph-btn--danger:hover,
+.hph button.hph-btn--danger,
+.hph button.hph-btn--danger:hover {
+	background: var(--hph-bad);
+	border-color: var(--hph-bad);
+	color: #FFFFFF;
+}
+
+.hph a.hph-link-danger {
+	color: var(--hph-bad);
+	font-size: 14px;
+	font-weight: 700;
+	margin-left: auto;
+}
+
+.hph-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+}
+
+/* ---------- cards + tables (My Account) ---------- */
+.hph-card {
+	background: var(--hph-surface);
+	border: 1px solid var(--hph-border);
+	border-radius: 14px;
+	padding: 18px 20px;
+	margin: 0;
+	min-width: 0;
+}
+
+.hph-card--flush {
+	padding: 0;
+	overflow-x: auto;
+}
+
+.hph-card--danger {
+	border-color: var(--hph-bad);
+	background: var(--hph-bad-soft);
+	display: grid;
+	gap: 12px;
+}
+
+.hph-card--danger p {
+	margin: 0;
+	font-size: 14.5px;
+}
+
+.hph-card__title {
+	font-family: var(--hph-body);
+	font-size: 16px;
+	font-weight: 800;
+	margin: 0 0 14px;
+	color: var(--hph-ink);
+}
+
+.hph-acc {
+	display: grid;
+	gap: 16px;
+	min-width: 0;
+}
+
+.hph-acc__head {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: 10px;
+}
+
+.hph-acc__title {
+	font-family: var(--hph-display);
+	font-size: clamp(26px, 3vw, 32px);
+	font-weight: 700;
+	line-height: 1.1;
+	margin: 0 0 4px;
+	color: var(--hph-ink);
+}
+
+.hph-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 0;
+	font-size: 14.5px;
+	border: 0;
+}
+
+.hph-table th,
+.hph-table td {
+	text-align: left;
+	padding: 12px 16px;
+	border: 0;
+	border-bottom: 1px solid var(--hph-border);
+	vertical-align: middle;
+	background: transparent;
+}
+
+.hph-table th {
+	font-size: 12px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--hph-muted);
+	background: var(--hph-soft);
+}
+
+.hph-table th.hph-r,
+.hph-table td.hph-r {
+	text-align: right;
+}
+
+.hph-table tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+.hph-table tr.is-current td {
+	background: var(--hph-accent-soft);
+}
+
+.hph-grid3 {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	align-items: start;
+	gap: 16px;
+}
+
+.hph-search {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+}
+
+.hph .hph-search input[type="search"] {
+	flex: 1 1 240px;
+	width: auto;
+	min-height: 40px;
+	background: var(--hph-surface);
+	border: 1px solid var(--hph-border);
+	border-radius: 999px;
+	padding: 8px 16px;
+	font: inherit;
+	font-size: 14.5px;
+	color: var(--hph-ink);
+	margin: 0;
+}
+
+.hph-pager {
+	display: flex;
+	gap: 6px;
+	font-size: 14px;
+}
+
+.hph-pager a,
+.hph-pager span {
+	min-width: 34px;
+	padding: 5px 10px;
+	text-align: center;
+	border: 1px solid var(--hph-border);
+	border-radius: 8px;
+	text-decoration: none;
+}
+
+.hph-pager .is-current {
+	background: var(--hph-accent);
+	border-color: var(--hph-accent);
+	color: var(--hph-accent-ink);
+}
+
+.hph-empty p {
+	margin: 0 0 4px;
+}
+
+/* ---------- dashboard + order history ---------- */
+.hph-tiles {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.hph-tile {
+	display: grid;
+	gap: 2px;
+	align-content: start;
+	background: var(--hph-surface);
+	border: 1px solid var(--hph-border);
+	border-radius: 14px;
+	padding: 14px 16px;
+	min-width: 0;
+}
+
+.hph-tile__k {
+	font-size: 12px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--hph-muted);
+}
+
+.hph-tile__v {
+	font-family: var(--hph-display);
+	font-size: 30px;
+	font-weight: 700;
+	line-height: 1.15;
+	color: var(--hph-ink);
+	overflow-wrap: anywhere;
+}
+
+.hph-tile__d {
+	font-size: 13px;
+	color: var(--hph-muted);
+}
+
+.hph-card__row {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 6px 12px;
+	margin: 0 0 6px;
+}
+
+.hph-card__row .hph-card__title {
+	margin: 0;
+}
+
+.hph-card__row--pad {
+	padding: 16px 20px 10px;
+	margin: 0;
+}
+
+.hph-pad {
+	padding: 0 20px 18px;
+	margin: 0;
+}
+
+.hph-bars {
+	display: flex;
+	align-items: flex-end;
+	gap: 10px;
+	height: 130px;
+	padding: 8px 0 0;
+	margin: 0 0 12px;
+	border-bottom: 1px solid var(--hph-border);
+}
+
+.hph-bars__col {
+	flex: 1;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	color: var(--hph-muted);
+}
+
+.hph-bars__col i {
+	display: block;
+	width: 100%;
+	max-width: 56px;
+	border-radius: 6px 6px 0 0;
+	background: var(--hph-accent);
+	opacity: 0.4;
+}
+
+.hph-bars__col.is-now i {
+	opacity: 1;
+}
+
+.hph-bars__col.is-now {
+	color: var(--hph-ink);
+	font-weight: 800;
+}
+
+.hph-table--plain th,
+.hph-table--plain td {
+	padding: 8px 4px;
+	background: transparent;
+}
+
+.hph-filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 10px;
+}
+
+.hph .hph-filters select {
+	width: auto;
+	min-width: 0;
+	max-width: 100%;
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+
+.hph-filters__end {
+	margin-left: auto;
+}
+
+.hph-st {
+	display: inline-block;
+	border-radius: 999px;
+	padding: 2px 10px;
+	font-size: 12.5px;
+	font-weight: 800;
+	white-space: nowrap;
+	background: var(--hph-accent-soft);
+	color: var(--hph-accent);
+}
+
+.hph-st--ok {
+	background: var(--hph-ok-soft);
+	color: var(--hph-ok);
+}
+
+.hph-st--warn {
+	background: #FBF0D9;
+	color: #8A5A00;
+}
+
+.hph-st--bad {
+	background: var(--hph-bad-soft);
+	color: var(--hph-bad);
+}
+
+.hph-table s {
+	margin-right: 6px;
+}
+
+.hph-nowrap {
+	white-space: nowrap;
+}
+
+.hph-row-actions {
+	display: inline-flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 6px;
+}
+
+/* ---------- checkout: ship this order to ---------- */
+.hph-recipient {
+	margin: 0 0 24px;
+}
+
+.hph-recipient .hph-card {
+	display: grid;
+	gap: 12px;
+}
+
+.hph-recipient .hph-card__head {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 4px 12px;
+	width: 100%;
+	float: left; /* lets a <legend> span the fieldset like a normal block */
+	font-size: 16px;
+	color: var(--hph-ink);
+	padding: 0;
+	margin: 0 0 2px;
+	border: 0;
+}
+
+.hph-recipient .hph-card__head + * {
+	clear: both;
+}
+
+.hph-radio-list {
+	display: grid;
+	gap: 8px;
+}
+
+.hph-radio-list.is-long {
+	max-height: 440px;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+.hph .hph-ro {
+	position: relative;
+	display: grid;
+	grid-template-columns: 18px minmax(0, 1fr) auto;
+	align-items: start;
+	gap: 12px;
+	padding: 12px 14px;
+	border: 1px solid var(--hph-border);
+	border-radius: 12px;
+	background: var(--hph-surface);
+	font-size: 14.5px;
+	font-weight: 400;
+	line-height: 1.45;
+	color: var(--hph-ink);
+	cursor: pointer;
+	margin: 0;
+}
+
+.hph .hph-ro:hover {
+	border-color: var(--hph-accent);
+}
+
+.hph .hph-ro.is-on {
+	border-color: var(--hph-accent);
+	background: var(--hph-accent-soft);
+}
+
+.hph-ro input {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+}
+
+.hph-ro__dot {
+	width: 18px;
+	height: 18px;
+	margin-top: 2px;
+	border-radius: 50%;
+	border: 2px solid var(--hph-border);
+	background: var(--hph-surface);
+}
+
+.hph-ro.is-on .hph-ro__dot {
+	border-color: var(--hph-accent);
+	box-shadow: inset 0 0 0 3px var(--hph-surface);
+	background: var(--hph-accent);
+}
+
+.hph-ro input:focus-visible ~ .hph-ro__dot {
+	outline: 2px solid var(--hph-accent);
+	outline-offset: 2px;
+}
+
+.hph-ro__body {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.hph-ro__body .hph-muted {
+	font-size: 13px;
+}
+
+.hph-ro__aside {
+	font-size: 12.5px;
+	white-space: nowrap;
+}
+
+.hph .hph-ro__save {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: -2px 0 2px 44px;
+	font-size: 13.5px;
+	font-weight: 600;
+	color: var(--hph-ink2);
+	cursor: pointer;
+}
+
+.hph .hph-ro__save[hidden] {
+	display: none;
+}
+
+.hph-ro__save input {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	accent-color: var(--hph-accent);
+}
+
+h3.hph-ship-heading {
+	font-family: var(--hph-body, "Mulish", system-ui, sans-serif);
+	font-size: 18px;
+	font-weight: 700;
+	margin: 20px 0 12px;
+}
+
+/* The box decides whether the order ships elsewhere, so WooCommerce's own toggle goes.
+   Its shipping fields show only for a new customer. */
+form.hph-ship-managed #ship-to-different-address {
+	display: none !important;
+}
+
+form.hph-ship-managed.hph-ship--self div.shipping_address,
+form.hph-ship-managed.hph-ship--customer div.shipping_address {
+	display: none !important;
+}
+
+/* Billing follows the chosen customer: shown, read-only, email excepted. The site's address
+   book picker for billing would put the dropshipper's own address back, so it goes too. */
+form.hph-ship-managed:is(.hph-ship--customer, .hph-ship--new) .woocommerce-billing-fields :is(input[readonly], #billing_country_field .select2-selection, #billing_state_field .select2-selection, select#billing_country, select#billing_state) {
+	/* Outside .hph, so the tokens are not defined here: same values, written out. Dark text,
+	   so a filled field never reads as an empty placeholder. */
+	background-color: #F1EADC;
+	color: #554C40;
+	-webkit-text-fill-color: #554C40;
+}
+
+form.hph-ship-managed:is(.hph-ship--customer, .hph-ship--new) :is(#billing_country_field, #billing_state_field) {
+	pointer-events: none;
+}
+
+form.hph-ship-managed:is(.hph-ship--customer, .hph-ship--new) .stherb-ab-choose[data-for="billing"] {
+	display: none !important;
+}
+
+.hph-recipient__billing {
+	margin: 10px 0 0;
+}
+
+/* Wide tables turn into one block per row when their card is narrow: on phones, and in
+   themes whose My Account column is narrow on desktop too. Browsers without container
+   queries scroll the card sideways instead. */
+.hph-card--flush {
+	container-type: inline-size;
+}
+
+@container (max-width: 560px) {
+	.hph-table thead {
+		display: none;
+	}
+
+	.hph-table tr {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 2px 12px;
+		padding: 12px 16px;
+		border-bottom: 1px solid var(--hph-border);
+	}
+
+	.hph-table td {
+		padding: 0;
+		border: 0;
+		text-align: left;
+	}
+
+	.hph-table td.hph-r {
+		text-align: left;
+	}
+
+	.hph-table tr.is-current {
+		background: var(--hph-accent-soft);
+	}
+
+	.hph-table tr.is-current td {
+		background: transparent;
+	}
+
+	.hph-table td[data-title]:not(:first-child)::before {
+		content: attr(data-title) ": ";
+		color: var(--hph-muted);
+		font-size: 13px;
+	}
+
+	.hph-table td:last-child {
+		grid-column: 2;
+		grid-row: 1;
+	}
+}
+
+/* The order history has more columns, so it stacks earlier. */
+@container (max-width: 760px) {
+	.hph-table--wide thead {
+		display: none;
+	}
+
+	.hph-table--wide tr {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 2px 12px;
+		padding: 12px 16px;
+		border-bottom: 1px solid var(--hph-border);
+	}
+
+	.hph-table--wide td {
+		padding: 0;
+		border: 0;
+		text-align: left;
+	}
+
+	.hph-table--wide td.hph-r {
+		text-align: left;
+	}
+
+	.hph-table--wide tr.is-current {
+		background: var(--hph-accent-soft);
+	}
+
+	.hph-table--wide tr.is-current td {
+		background: transparent;
+	}
+
+	.hph-table--wide td[data-title]:not(:first-child)::before {
+		content: attr(data-title) ": ";
+		color: var(--hph-muted);
+		font-size: 13px;
+	}
+
+	.hph-table--wide td:last-child {
+		grid-column: 2;
+		grid-row: 1;
+	}
+}
+
+@media (max-width: 860px) {
+	.hph-tiles {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 640px) {
+	.hph-grid2,
+	.hph-grid3 {
+		grid-template-columns: 1fr;
+	}
+
+	.hph-tile__v {
+		font-size: 24px;
+	}
+
+	.hph .hph-filters select {
+		flex: 1 1 140px;
+	}
+
+	.hph-filters__end {
+		margin-left: 0;
+	}
+
+	.hph .hph-acc__head .hph-btn,
+	.hph .hph-table .hph-btn,
+	.hph .hph-search .hph-btn,
+	.hph .hph-filters .hph-btn {
+		width: auto;
+	}
+
+	.hph .hph-btn {
+		width: 100%;
+	}
+}

@@ -1,0 +1,23 @@
+=== Herb Partner Hub ===
+Requires at least: 6.5
+Requires PHP: 8.1
+Stable tag: 0.1.0
+
+Dropshipper programme for WooCommerce.
+
+== Description ==
+
+Applications and approval, wholesale prices for approved dropshippers, end customers and "Ship to" at checkout, order history and reports. Dropshippers earn from the margin between the wholesale price and their own selling price; there is no commission.
+
+Every module is off after installing, and soft launch is on with nobody listed, so activating changes nothing for customers. Switch modules on under Dropshippers › Settings.
+
+== Changelog ==
+
+= 0.1.0 =
+* Core: dropshipper role and capabilities, database tables, settings, soft launch, "View as dropshipper" for admins, activity log.
+* Applications: [herb_partner_apply] form, Dropshippers › Applications list and review screen (approve / ask for more info / not approved), five WooCommerce emails, 7-day set-password link that signs the new dropshipper in.
+* Pricing: dropshipper price per product and per variation, products not open to dropshippers hidden and unbuyable, Dropshippers › Products screen with bulk actions and CSV export/import.
+* Discounts: Stherb Promo Engine, Woo Discount Rules, Tier Pricing Table, coupons and Power Coupons never apply to dropshippers.
+* Customers: My Account › My Customers (each dropshipper sees only their own list, delete on request keeps past orders' addresses), "Ship this order to" at checkout (saved customer / new customer / myself), the server fills the recipient's address and phone. An order to an end customer is billed to that customer too (name, address, phone, for the customs declaration); only the billing email stays the dropshipper's, so the receipt goes to them. The dropshipper's own profile address is never overwritten.
+* Orders: partner dashboard on the My Account front page, order history with ship-to, DHL tracking (read from order notes), filters, CSV export and Reorder that picks the same recipient at checkout.
+* Reports: Dropshippers › Overview with monthly dropshipper sales, active dropshippers, waiting applications, ranking and CSV export.
