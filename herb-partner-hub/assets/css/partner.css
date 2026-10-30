@@ -914,32 +914,42 @@ h3.hph-ship-heading {
 }
 
 /* The box decides whether the order ships elsewhere, so WooCommerce's own toggle goes.
-   Its shipping fields show only for a new customer. */
+   Shipping fields show for a saved customer (read-only, to check) and a new customer
+   (to type); "Ship to myself" uses the billing address. */
 form.hph-ship-managed #ship-to-different-address {
 	display: none !important;
 }
 
-form.hph-ship-managed.hph-ship--self div.shipping_address,
-form.hph-ship-managed.hph-ship--customer div.shipping_address {
+form.hph-ship-managed.hph-ship--self div.shipping_address {
 	display: none !important;
 }
 
-/* Billing follows the chosen customer: shown, read-only, email excepted. The site's address
-   book picker for billing would put the dropshipper's own address back, so it goes too. */
-form.hph-ship-managed:is(.hph-ship--customer, .hph-ship--new) .woocommerce-billing-fields :is(input[readonly], #billing_country_field .select2-selection, #billing_state_field .select2-selection, select#billing_country, select#billing_state) {
-	/* Outside .hph, so the tokens are not defined here: same values, written out. Dark text,
-	   so a filled field never reads as an empty placeholder. */
+form.hph-ship-managed:not(.hph-ship--customer) .hph-ship-heading__saved,
+form.hph-ship-managed.hph-ship--customer .hph-ship-heading__new {
+	display: none;
+}
+
+.hph-ship-hint {
+	margin: -6px 0 14px;
+	font-size: 14px;
+	color: #554C40;
+}
+
+.hph-ship-hint a {
+	text-decoration: underline;
+}
+
+/* A saved customer's address comes from My Customers (the server uses that copy), so the
+   fields are read-only. Outside .hph, so the tokens are not defined here: same values,
+   written out. Dark text, so a filled field never reads as an empty placeholder. */
+form.hph-ship-managed.hph-ship--customer div.shipping_address :is(input[readonly], #shipping_country_field .select2-selection, #shipping_state_field .select2-selection, select#shipping_country, select#shipping_state) {
 	background-color: #F1EADC;
 	color: #554C40;
 	-webkit-text-fill-color: #554C40;
 }
 
-form.hph-ship-managed:is(.hph-ship--customer, .hph-ship--new) :is(#billing_country_field, #billing_state_field) {
+form.hph-ship-managed.hph-ship--customer :is(#shipping_country_field, #shipping_state_field) {
 	pointer-events: none;
-}
-
-form.hph-ship-managed:is(.hph-ship--customer, .hph-ship--new) .stherb-ab-choose[data-for="billing"] {
-	display: none !important;
 }
 
 .hph-recipient__billing {

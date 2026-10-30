@@ -9,10 +9,11 @@ defined( 'ABSPATH' ) || exit;
  * standard shipping_* fields, so DHL Express Commerce and the shipping manager read the
  * recipient the way they always have — no new meta that they need to know about.
  *
- * An order to an end customer is billed to that customer too (name, address, phone), so
- * the customs declaration names the person abroad who receives it. Only billing_email
- * stays the dropshipper's: the receipt, at wholesale prices, goes to them, never to the
- * end customer. The dropshipper's own billing address in their profile is never changed.
+ * Billing stays the dropshipper's own, because they pay: the card checks (Stripe AVS and
+ * Radar, 2C2P) compare the billing address with the card holder's. The receipt, at
+ * wholesale prices, goes to them too, never to the end customer. The end customer's
+ * details are frozen on the order (META_BILL_TO) for the bill the CRM attaches to the
+ * parcel later; on the order itself they are the shipping address only.
  *
  * The server decides the address, not the browser: on submit the chosen customer is
  * loaded again with the current user as owner and copied over whatever the form posted.
@@ -32,6 +33,8 @@ final class HPH_Checkout_Recipient {
 	public const SAVE_FIELD    = 'hph_save_customer';
 	public const META_SHIP_TO  = '_hph_ship_to';
 	public const META_CUSTOMER = '_hph_end_customer_id';
+	public const META_BILL_TO  = '_hph_bill_to';
+	public const BILL_VERSION  = 1;
 	public const SESSION_KEY   = 'hph_reorder_recipient';
 
 	/** The recipient resolved for the order being placed in this request. */
@@ -54,8 +57,7 @@ final class HPH_Checkout_Recipient {
 		add_action( 'woocommerce_checkout_process', array( $this, 'before_process' ) );
 		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'posted_data' ), 20 );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate' ), 20, 2 );
-		add_action( 'woocommerce_checkout_update_customer', array( $this, 'keep_own_addresses' ), 20, 2 );
-		add_filter( 'woocommerce_checkout_get_value', array( $this, 'billing_value' ), 20, 2 );
+		add_action( 'woocommerce_checkout_update_customer', array( $this, 'keep_own_shipping_address' ), 20, 2 );
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'create_order' ), 15, 2 );
 
 		add_action( 'woocommerce_ordered_again', array( $this, 'remember_reorder' ) );
@@ -121,13 +123,27 @@ final class HPH_Checkout_Recipient {
 
 	/**
 	 * WooCommerce's "Ship to a different address?" heading is hidden for dropshippers (the
-	 * box decides), so the new customer's fields get a heading of their own, otherwise
-	 * they read as more billing fields.
+	 * box decides), so the shipping fields get a heading of their own, otherwise they read
+	 * as more billing fields. Both texts are printed; the form's hph-ship--* class shows one.
+	 * A saved customer's fields are shown read-only so the dropshipper can check them
+	 * before paying; the hint says where to change them.
 	 */
 	public function shipping_heading(): void {
-		if ( self::applies() ) {
-			echo '<h3 class="hph-ship-heading">' . esc_html__( "New customer's delivery address", 'herb-partner-hub' ) . '</h3>';
+		if ( ! self::applies() ) {
+			return;
 		}
+		echo '<h3 class="hph-ship-heading">';
+		echo '<span class="hph-ship-heading__new">' . esc_html__( "New customer's delivery address", 'herb-partner-hub' ) . '</span>';
+		echo '<span class="hph-ship-heading__saved">' . esc_html__( 'Delivery address', 'herb-partner-hub' ) . '</span>';
+		echo '</h3>';
+		printf(
+			'<p class="hph-ship-hint hph-ship-heading__saved">%s</p>',
+			sprintf(
+				/* translators: %s: My Customers URL */
+				wp_kses_post( __( 'Please check your customer\'s details before you pay. To change them, edit the customer in <a href="%s">My Customers</a>.', 'herb-partner-hub' ) ),
+				esc_url( HPH_Customers_Account::url() )
+			)
+		);
 	}
 
 	public function enqueue(): void {
@@ -141,16 +157,7 @@ final class HPH_Checkout_Recipient {
 		foreach ( HPH_Customer_Repo::all_for_owner( get_current_user_id() ) as $row ) {
 			$book[ 'customer-' . $row['id'] ] = array_intersect_key( $row, array_flip( HPH_Customer_Repo::ADDRESS_FIELDS ) );
 		}
-		$own = self::own_billing( get_current_user_id() );
-		unset( $own['email'] );
-		wp_localize_script(
-			'hph-checkout-recipient',
-			'hphRecipients',
-			array(
-				'book' => $book,
-				'self' => $own,
-			)
-		);
+		wp_localize_script( 'hph-checkout-recipient', 'hphRecipients', array( 'book' => $book ) );
 	}
 
 	public function render(): void {
@@ -162,7 +169,7 @@ final class HPH_Checkout_Recipient {
 		$stats     = HPH_Customer_Repo::order_stats( $owner );
 		$selected  = (string) apply_filters( 'hph_checkout_default_recipient', 'self', $owner );
 		$prefilled = null !== $this->reorder && $selected === $this->reorder['choice'] && 'self' !== $selected;
-		$email     = self::own_billing( $owner )['email'];
+		$email     = self::own_email( $owner );
 
 		include locate_template( 'herb-partner-hub/checkout/recipient.php' ) ?: HPH_PATH . 'templates/checkout/recipient.php';
 	}
@@ -186,34 +193,21 @@ final class HPH_Checkout_Recipient {
 	/**
 	 * WooCommerce decides which address fields are required (a state for Thailand, none
 	 * for Singapore) from the countries in $_POST, before woocommerce_checkout_posted_data
-	 * runs. So the recipient's address goes into the request itself, or a browser that
-	 * still sent the dropshipper's own billing (script failed, old form) would be asked
-	 * for a state the customer's country does not have. posted_data() sets the same values.
+	 * runs. So a saved customer's address goes into the request itself, or a stale form
+	 * (script failed, CartFlows restored old values) would be checked against the wrong
+	 * country. posted_data() sets the same values. Billing is left as posted.
 	 */
 	private static function align_request( string $posted ): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- WooCommerce checked the checkout nonce before woocommerce_checkout_process.
-		$address = null;
-		if ( str_starts_with( $posted, 'customer-' ) ) {
-			$row = HPH_Customer_Repo::get( (int) substr( $posted, 9 ), get_current_user_id() );
-			if ( $row ) {
-				$address = array_intersect_key( $row, array_flip( HPH_Customer_Repo::ADDRESS_FIELDS ) );
-				foreach ( $address as $f => $v ) {
-					$_POST[ 'shipping_' . $f ] = wp_slash( (string) $v );
-				}
-			}
-		} elseif ( 'new' === $posted ) {
-			$address = array();
-			foreach ( HPH_Customer_Repo::ADDRESS_FIELDS as $f ) {
-				$address[ $f ] = wc_clean( wp_unslash( $_POST[ 'shipping_' . $f ] ?? '' ) );
-			}
-		}
-		if ( null === $address ) {
+		if ( ! str_starts_with( $posted, 'customer-' ) ) {
 			return;
 		}
-		foreach ( $address as $f => $v ) {
-			$_POST[ 'billing_' . $f ] = wp_slash( (string) $v );
+		$row = HPH_Customer_Repo::get( (int) substr( $posted, 9 ), get_current_user_id() );
+		if ( ! $row ) {
+			return;
 		}
-		// phpcs:enable
+		foreach ( HPH_Customer_Repo::ADDRESS_FIELDS as $f ) {
+			$_POST[ 'shipping_' . $f ] = wp_slash( (string) $row[ $f ] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce checked the checkout nonce before woocommerce_checkout_process.
+		}
 	}
 
 	/**
@@ -240,7 +234,6 @@ final class HPH_Checkout_Recipient {
 				$data['ship_to_different_address'] = 1;
 				foreach ( HPH_Customer_Repo::ADDRESS_FIELDS as $f ) {
 					$data[ 'shipping_' . $f ] = (string) $row[ $f ];
-					$data[ 'billing_' . $f ]  = (string) $row[ $f ];
 				}
 			}
 		} elseif ( 'new' === $posted ) {
@@ -248,9 +241,6 @@ final class HPH_Checkout_Recipient {
 			$data['ship_to_different_address'] = 1;
 			if ( ! isset( $data['shipping_phone'] ) ) {
 				$data['shipping_phone'] = wc_clean( wp_unslash( $_POST['shipping_phone'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce checked the checkout nonce.
-			}
-			foreach ( HPH_Customer_Repo::ADDRESS_FIELDS as $f ) {
-				$data[ 'billing_' . $f ] = (string) ( $data[ 'shipping_' . $f ] ?? '' );
 			}
 		} elseif ( 'self' === $posted ) {
 			$data['ship_to_different_address'] = 0;
@@ -284,69 +274,28 @@ final class HPH_Checkout_Recipient {
 	}
 
 	/**
-	 * WooCommerce copies the posted billing and shipping addresses onto the user's profile.
-	 * For an order to an end customer that would make the next checkout prefill someone
-	 * else's address as the dropshipper's own, and the Overview and order exports read the
-	 * shop name and country from the profile. So the profile keeps its saved addresses.
+	 * WooCommerce copies the posted shipping address onto the user's profile. For an order
+	 * to an end customer that would make the next checkout prefill someone else's address
+	 * as the dropshipper's own, so the profile keeps its saved shipping address. Billing is
+	 * the dropshipper's own and is saved the normal way.
 	 */
-	public function keep_own_addresses( WC_Customer $customer, array $data ): void {
+	public function keep_own_shipping_address( WC_Customer $customer, array $data ): void {
 		if ( null === $this->choice || in_array( $this->choice['type'], array( 'self', 'missing' ), true ) ) {
 			return;
 		}
 		$user_id = $customer->get_id();
-		foreach ( array( 'shipping', 'billing' ) as $type ) {
-			foreach ( HPH_Customer_Repo::ADDRESS_FIELDS as $f ) {
-				$setter = 'set_' . $type . '_' . $f;
-				if ( is_callable( array( $customer, $setter ) ) ) {
-					$customer->$setter( (string) get_user_meta( $user_id, $type . '_' . $f, true ) );
-				}
+		foreach ( HPH_Customer_Repo::ADDRESS_FIELDS as $f ) {
+			$setter = 'set_shipping_' . $f;
+			if ( is_callable( array( $customer, $setter ) ) ) {
+				$customer->$setter( (string) get_user_meta( $user_id, 'shipping_' . $f, true ) );
 			}
 		}
 	}
 
-	/**
-	 * Billing fields as the checkout page first renders them. The session's billing address
-	 * may still be the last end customer's (WooCommerce stores the location on every price
-	 * refresh), so render from the choice the box starts with: the dropshipper's own profile
-	 * for "Ship to myself", the customer's for a Reorder to them. Email is never touched.
-	 * Page render only: on submit and on price refreshes WooCommerce reads the billing
-	 * country back through get_value() to decide which fields are required, and it has to
-	 * get the posted one (a customer in Singapore has no state; Thailand requires one).
-	 */
-	public function billing_value( $value, $input ) {
-		if ( null !== $value || ! is_string( $input ) || ! str_starts_with( $input, 'billing_' ) || 'billing_email' === $input ) {
-			return $value;
-		}
-		if ( wp_doing_ajax() || did_action( 'woocommerce_before_checkout_process' ) || ! self::applies() ) {
-			return $value;
-		}
-		$field = substr( $input, 8 );
-		if ( ! in_array( $field, HPH_Customer_Repo::ADDRESS_FIELDS, true ) ) {
-			return $value;
-		}
-		$owner    = get_current_user_id();
-		$selected = (string) apply_filters( 'hph_checkout_default_recipient', 'self', $owner );
-
-		if ( str_starts_with( $selected, 'customer-' ) ) {
-			$row = HPH_Customer_Repo::get( (int) substr( $selected, 9 ), $owner );
-			return $row ? (string) $row[ $field ] : $value;
-		}
-		if ( 'new' === $selected && WC()->customer ) {
-			$getter = 'get_shipping_' . $field;
-			return is_callable( array( WC()->customer, $getter ) ) ? (string) WC()->customer->$getter() : $value;
-		}
-		return self::own_billing( $owner )[ $field ] ?? $value;
-	}
-
-	/** The dropshipper's own billing details from their profile, plus the receipt email. */
-	private static function own_billing( int $user_id ): array {
-		$out = array();
-		foreach ( HPH_Customer_Repo::ADDRESS_FIELDS as $f ) {
-			$out[ $f ] = (string) get_user_meta( $user_id, 'billing_' . $f, true );
-		}
-		$user         = get_userdata( $user_id );
-		$out['email'] = (string) get_user_meta( $user_id, 'billing_email', true ) ?: ( $user ? $user->user_email : '' );
-		return $out;
+	/** The dropshipper's billing email from their profile, where the receipt goes. */
+	private static function own_email( int $user_id ): string {
+		$user = get_userdata( $user_id );
+		return (string) get_user_meta( $user_id, 'billing_email', true ) ?: ( $user ? $user->user_email : '' );
 	}
 
 	public function create_order( WC_Order $order, array $data ): void {
@@ -384,6 +333,45 @@ final class HPH_Checkout_Recipient {
 		} else {
 			$order->delete_meta_data( self::META_CUSTOMER );
 		}
+
+		if ( 'customer' === $type && $row ) {
+			$order->update_meta_data( self::META_BILL_TO, self::bill_snapshot( $row, 'saved', (int) $row['id'] ) );
+		} elseif ( 'new' === $type ) {
+			$order->update_meta_data( self::META_BILL_TO, self::bill_snapshot( $input, 'new', $row ? (int) $row['id'] : 0 ) );
+		} else {
+			$order->delete_meta_data( self::META_BILL_TO );
+		}
+	}
+
+	/**
+	 * The end customer as they were when the order was placed, for the bill the CRM
+	 * attaches to the parcel. A copy, not a link: My Customers rows can be edited or
+	 * deleted on request, and staff may correct the shipping address on the order later.
+	 *
+	 * @param array  $address    ADDRESS_FIELDS, plus 'email' when known.
+	 * @param string $source     'saved' (picked from My Customers) or 'new' (typed at checkout).
+	 * @param int    $customer_id My Customers row id, 0 for a new customer who was not saved.
+	 */
+	private static function bill_snapshot( array $address, string $source, int $customer_id ): array {
+		$bill = array(
+			'version'     => self::BILL_VERSION,
+			'source'      => $source,
+			'customer_id' => $customer_id,
+		);
+		foreach ( HPH_Customer_Repo::ADDRESS_FIELDS as $f ) {
+			$bill[ $f ] = (string) ( $address[ $f ] ?? '' );
+		}
+		$bill['email'] = (string) ( $address['email'] ?? '' );
+		return $bill;
+	}
+
+	/**
+	 * The end customer's bill-to details saved with an order (see bill_snapshot()), or null
+	 * when the dropshipper shipped it to themselves or it is not a dropshipper order.
+	 */
+	public static function bill_to( WC_Order $order ): ?array {
+		$bill = $order->get_meta( self::META_BILL_TO );
+		return is_array( $bill ) && $bill ? $bill : null;
 	}
 
 	/**

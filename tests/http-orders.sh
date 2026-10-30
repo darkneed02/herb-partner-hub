@@ -103,7 +103,7 @@ has "marked prefilled (no refresh on load)" "$CO" 'data-hph-prefilled'
 has "ship-to-different rendered checked" "$(echo "$CO" | grep -o '<input id="ship-to-different-address-checkbox"[^>]*>')" 'checked'
 has "shipping country from the session is the customer's" "$(echo "$CO" | tr '\n' ' ' | sed 's/.*name="shipping_country"//; s/<\/select>.*//')" "value=\"SG\"  selected='selected'"
 has "first render already prices Singapore" "$CO" 'Flat Singapore'
-has "reorder: billing rendered as the customer" "$(echo "$CO" | tr '\n' ' ' | sed 's/.*name="billing_country"//; s/<\/select>.*//')" "value=\"SG\"  selected='selected'"
+has "reorder: billing rendered as the dropshipper" "$(echo "$CO" | tr '\n' ' ' | sed 's/.*name="billing_country"//; s/<\/select>.*//')" "value=\"TH\"  selected='selected'"
 eq "profile shipping not touched by reorder" "$(php "echo get_user_meta( $P, 'shipping_country', true );")" ''
 N=$(echo "$CO" | grep -o 'name="woocommerce-process-checkout-nonce" value="[^"]*"' | head -1 | sed 's/.*value="//;s/"$//')
 R=$(post hph_t5_p "$BASE/?wc-ajax=checkout" --data "billing_first_name=Mali&billing_last_name=Srisuk&billing_company=Hph_t5_p+Shop&billing_country=TH&billing_address_1=99+Sukhumvit+Rd&billing_city=Bangkok&billing_state=TH-10&billing_postcode=10110&billing_phone=%2B66810000000&billing_email=hph_t5_p%40example.com&payment_method=cod&woocommerce-process-checkout-nonce=$N&hph_ship_to=customer-$CID")
