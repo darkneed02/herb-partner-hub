@@ -91,11 +91,13 @@ hasnt "address book shipping picker removed for dropshippers" "$CO" 'data-for="s
 has "box on the checkout page" "$CO" 'id="hph-recipient"'
 has "saved customer offered" "$CO" "value=\"customer-$CA\""
 has "receipt goes to the dropshipper" "$CO" 'receipt goes to hph_t4_http_a@example.com'
-has "billing note for customs (shown when a customer is chosen)" "$CO" 'data-hph-billing-note'
-has "own billing passed to the script for Ship to myself" "$CO" '"self":{"first_name":"Mali"'
+has "note: billing stays the dropshipper's (card)" "$CO" 'Billing details stay yours'
+hasnt "no billing address passed to the script" "$CO" '"self":{'
 has "first render bills the dropshipper (self preselected)" "$(echo "$CO" | grep -o 'id="billing_city"[^>]*')" 'value="Bangkok"'
 has "ship to myself preselected" "$CO" 'value="self"  checked='
-has "new customer fields get their own heading" "$CO" 'class="hph-ship-heading"'
+has "new customer fields get their own heading" "$CO" 'class="hph-ship-heading__new">New customer'
+has "saved customer: delivery address heading" "$CO" 'class="hph-ship-heading__saved">Delivery address'
+has "saved customer: check hint links to My Customers" "$CO" 'edit the customer in <a href="http://localhost:8090/my-account/my-customers/">My Customers</a>'
 has "recipient phone required on the form" "$CO" 'validate-required validate-phone" id="shipping_phone_field"'
 has "address-i18n leaves the recipient phone alone" "$CO" '\"phone\":\"#billing_phone_field\"'
 UR=$(nonce_in "$TMP/co-hph_t4_http_a.html" update_order_review_nonce || true)
@@ -104,17 +106,25 @@ R=$(post hph_t4_http_a "$BASE/?wc-ajax=update_order_review" --data "security=$UR
 has "shipping price follows the recipient's country (MY 30)" "$R" 'Flat Malaysia'
 
 # Saved customer, with the browser sending nothing useful for shipping (JS failed): server fills it.
-# The browser also posts the dropshipper's own billing (JS failed, or edited): the server replaces it.
 R=$(place hph_t4_http_a "hph_ship_to=customer-$CA&shipping_country=TH&shipping_city=Wrong")
 has "order to saved customer placed" "$R" '"result":"success"'
 eq "order ships to the saved customer" "$(last_order $A '$o->get_shipping_city() . "|" . $o->get_shipping_country() . "|" . $o->get_shipping_phone()')" 'Kuala Lumpur|MY|+60 12 345 6789'
-eq "billing is the saved customer (for customs)" "$(last_order $A '$o->get_billing_first_name() . " " . $o->get_billing_last_name() . "|" . $o->get_billing_address_1() . "|" . $o->get_billing_city() . "|" . $o->get_billing_country() . "|" . $o->get_billing_phone()')" 'Customer A|12 Jalan Ampang|Kuala Lumpur|MY|+60 12 345 6789'
-eq "billing company not the dropshipper's shop" "$(last_order $A '$o->get_billing_company()')" ''
-eq "billing email stays the dropshipper's (receipt)" "$(last_order $A '$o->get_billing_email()')" 'hph_t4_http_a@example.com'
-eq "profile billing not overwritten" "$(php "echo get_user_meta( $A, 'billing_company', true ) . '|' . get_user_meta( $A, 'billing_city', true ) . '|' . get_user_meta( $A, 'billing_country', true ) . '|' . get_user_meta( $A, 'billing_phone', true );")" 'Mali Beauty Shop|Bangkok|TH|+66 81 000 0000'
+eq "billing stays the dropshipper's (matches the card)" "$(last_order $A '$o->get_billing_first_name() . " " . $o->get_billing_last_name() . "|" . $o->get_billing_address_1() . "|" . $o->get_billing_city() . "|" . $o->get_billing_country() . "|" . $o->get_billing_phone() . "|" . $o->get_billing_email()')" 'Mali Srisuk|99 Sukhumvit Rd|Bangkok|TH|+66810000000|hph_t4_http_a@example.com'
+eq "bill-to snapshot = the saved customer (for the CRM)" "$(last_order $A 'implode( "|", array_map( fn( $k ) => HPH_Checkout_Recipient::bill_to( $o )[ $k ], explode( ",", "version,source,customer_id,first_name,last_name,address_1,city,state,postcode,country,phone" ) ) )')" "1|saved|$CA|Customer|A|12 Jalan Ampang|Kuala Lumpur|KUL|50450|MY|+60 12 345 6789"
+eq "bill-to snapshot has every field" "$(last_order $A 'implode( ",", array_keys( $o->get_meta( "_hph_bill_to" ) ) )')" 'version,source,customer_id,first_name,last_name,company,address_1,address_2,city,state,postcode,country,phone,email'
+eq "bill-to readable over the REST API (for the CRM)" "$(php "wp_set_current_user( 1 ); \$r = rest_do_request( new WP_REST_Request( 'GET', '/wc/v3/orders/' . wc_get_orders( array( 'customer_id' => $A, 'limit' => 1, 'orderby' => 'id', 'order' => 'DESC' ) )[0]->get_id() ) ); \$m = array(); foreach ( \$r->get_data()['meta_data'] as \$x ) { \$x = \$x instanceof WC_Meta_Data ? \$x->get_data() : (array) \$x; \$m[ \$x['key'] ] = \$x['value']; } echo \$r->get_status() . '|' . ( \$m['_hph_bill_to']['city'] ?? 'missing' );")" '200|Kuala Lumpur'
+SNAP_ORDER=$(last_order $A '$o->get_id()')
+eq "profile billing is still the dropshipper's own" "$(php "echo get_user_meta( $A, 'billing_company', true ) . '|' . get_user_meta( $A, 'billing_city', true ) . '|' . get_user_meta( $A, 'billing_country', true );")" 'Mali Beauty Shop|Bangkok|TH'
 CO2=$(get hph_t4_http_a "$BASE/?add-to-cart=$PRODUCT" >/dev/null; get hph_t4_http_a "$BASE/checkout/")
 has "next checkout bills the dropshipper again" "$(echo "$CO2" | grep -o 'id="billing_city"[^>]*')" 'value="Bangkok"'
 has "next checkout billing country is own again" "$(echo "$CO2" | tr '\n' ' ' | sed 's/.*name="billing_country"//; s/<\/select>.*//')" "value=\"TH\"  selected='selected'"
+
+# Billing country without states (SG) shipping to a customer whose country has them (MY), and
+# the other way round below (TH billing, SG new customer): no "State is required" either way.
+R=$(place hph_t4_http_a "hph_ship_to=customer-$CA&billing_country=SG&billing_state=&billing_city=Singapore&billing_postcode=238801")
+has "SG billing to a MY customer placed (no state error)" "$R" '"result":"success"'
+eq "SG billing kept, MY shipping" "$(last_order $A '$o->get_billing_country() . "|" . $o->get_billing_state() . "|" . $o->get_shipping_country() . "|" . $o->get_shipping_state() . "|" . $o->get_shipping_total()')" 'SG||MY|KUL|30'
+php "update_user_meta( $A, 'billing_country', 'TH' ); update_user_meta( $A, 'billing_state', 'TH-10' ); update_user_meta( $A, 'billing_city', 'Bangkok' ); update_user_meta( $A, 'billing_postcode', '10110' );"
 get hph_t4_http_a "$BASE/cart/?empty-cart=1" >/dev/null
 eq "shipping charged for Malaysia" "$(last_order $A '$o->get_shipping_total()')" '30'
 eq "order meta snapshot" "$(last_order $A '$o->get_meta( "_hph_ship_to" ) . "|" . $o->get_meta( "_hph_end_customer_id" ) . "|" . $o->get_meta( "_hph_dropshipper_id" )')" "customer|$CA|$A"
@@ -133,26 +143,40 @@ has "new customer without phone refused" "$R" 'recipient phone'
 R=$(place hph_t4_http_b "$NEWC&shipping_phone=%2B6581234567")
 has "new customer order placed" "$R" '"result":"success"'
 eq "new customer order ships to Singapore at SG rate" "$(last_order $B '$o->get_shipping_country() . "|" . $o->get_shipping_total() . "|" . $o->get_shipping_phone()')" 'SG|20|+6581234567'
-eq "new customer order billed to the new customer" "$(last_order $B '$o->get_billing_first_name() . " " . $o->get_billing_last_name() . "|" . $o->get_billing_city() . "|" . $o->get_billing_country() . "|" . $o->get_billing_phone()')" 'Customer C|Singapore|SG|+6581234567'
-eq "new customer order: receipt to the dropshipper" "$(last_order $B '$o->get_billing_email()')" 'hph_t4_http_b@example.com'
+eq "new customer order: billing stays the dropshipper's" "$(last_order $B '$o->get_billing_first_name() . "|" . $o->get_billing_city() . "|" . $o->get_billing_country() . "|" . $o->get_billing_state() . "|" . $o->get_billing_email()')" 'Mali|Bangkok|TH|TH-10|hph_t4_http_b@example.com'
+eq "bill-to snapshot = the new customer, saved row" "$(last_order $B 'implode( "|", array_map( fn( $k ) => HPH_Checkout_Recipient::bill_to( $o )[ $k ], explode( ",", "source,first_name,last_name,address_1,city,country,phone,email" ) ) ) . "|" . ( HPH_Checkout_Recipient::bill_to( $o )["customer_id"] > 0 ? "row" : "none" )')" 'new|Customer|C|1 Orchard Rd|Singapore|SG|+6581234567||row'
 eq "B's profile billing unchanged" "$(php "echo get_user_meta( $B, 'billing_city', true ) . '|' . get_user_meta( $B, 'billing_country', true );")" 'Bangkok|TH'
 checkout_page hph_t4_http_b
 R=$(place hph_t4_http_b "$NEWC&shipping_phone=%2B6581234567")
 eq "new customer saved once (retry does not duplicate)" "$(php "echo HPH_Customer_Repo::for_owner( $B )['total'];")" '1'
 eq "order linked to the saved row" "$(last_order $B '(int) $o->get_meta( "_hph_end_customer_id" ) > 0 ? "yes" : "no"')" 'yes'
+checkout_page hph_t4_http_b
+R=$(place hph_t4_http_b "hph_ship_to=new&ship_to_different_address=1&shipping_first_name=Customer&shipping_last_name=D&shipping_country=SG&shipping_address_1=8+Marina+Blvd&shipping_city=Singapore&shipping_postcode=018981&shipping_phone=%2B6590000000")
+has "new customer, not saved, placed" "$R" '"result":"success"'
+eq "bill-to snapshot for a new customer who was not saved" "$(last_order $B 'implode( "|", array_map( fn( $k ) => HPH_Checkout_Recipient::bill_to( $o )[ $k ], explode( ",", "source,customer_id,last_name,address_1" ) ) )')" 'new|0|D|8 Marina Blvd'
+eq "not saved means not in My Customers" "$(php "echo HPH_Customer_Repo::for_owner( $B )['total'];")" '1'
 
 checkout_page hph_t4_http_a
 R=$(place hph_t4_http_a "hph_ship_to=self&ship_to_different_address=1&shipping_country=MY&shipping_city=Stale")
 has "ship to myself placed" "$R" '"result":"success"'
 eq "ships to own billing address" "$(last_order $A '$o->get_shipping_city() . "|" . $o->get_shipping_total() . "|" . $o->get_meta( "_hph_ship_to" ) . "|" . $o->get_meta( "_hph_end_customer_id" )')" 'Bangkok|5|self|'
 eq "ship to myself: billed to the dropshipper" "$(last_order $A '$o->get_billing_first_name() . "|" . $o->get_billing_city() . "|" . $o->get_billing_country()')" 'Mali|Bangkok|TH'
+eq "ship to myself: no bill-to snapshot" "$(last_order $A 'var_export( HPH_Checkout_Recipient::bill_to( $o ), true )')" 'NULL'
+
+# The snapshot is a copy: editing, then erasing, the My Customers row leaves past orders' bill-to as it was.
+php "HPH_Customer_Repo::update( $CA, $A, array_merge( HPH_Customer_Repo::get( $CA, $A ), array( 'city' => 'Penang', 'phone' => '+60 4 000 0000' ) ) );"
+eq "row edited" "$(php "echo HPH_Customer_Repo::get( $CA, $A )['city'];")" 'Penang'
+eq "bill-to unchanged after the row was edited" "$(php "echo wc_get_order( $SNAP_ORDER )->get_meta( '_hph_bill_to' )['city'];")" 'Kuala Lumpur'
 
 checkout_page hph_t4_http_c
 hasnt "normal customer sees no box" "$(cat "$TMP/co-hph_t4_http_c.html")" 'hph-recipient'
 R=$(place hph_t4_http_c "")
 has "normal customer checkout unchanged" "$R" '"result":"success"'
 
-has "My Customers shows the order count" "$(get hph_t4_http_a "$ACC")" '<td data-title="Orders" class="hph-r hph-num">1</td>'
+has "My Customers shows the order count" "$(get hph_t4_http_a "$ACC")" '<td data-title="Orders" class="hph-r hph-num">2</td>'
+php "HPH_Customer_Repo::erase( $CA, $A );"
+eq "row erased on request" "$(php "echo HPH_Customer_Repo::get( $CA, $A ) ? 'still there' : 'gone';")" 'gone'
+eq "bill-to kept after the row was erased" "$(php "\$b = wc_get_order( $SNAP_ORDER )->get_meta( '_hph_bill_to' ); echo \$b['first_name'] . ' ' . \$b['last_name'] . '|' . \$b['city'];")" 'Customer A|Kuala Lumpur'
 
 rm -rf "$TMP"
 echo

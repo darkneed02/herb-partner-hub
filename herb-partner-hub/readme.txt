@@ -1,7 +1,7 @@
 === Herb Partner Hub ===
 Requires at least: 6.5
 Requires PHP: 8.1
-Stable tag: 0.1.0
+Stable tag: 0.1.1
 
 Dropshipper programme for WooCommerce.
 
@@ -12,6 +12,11 @@ Applications and approval, wholesale prices for approved dropshippers, end custo
 Every module is off after installing, and soft launch is on with nobody listed, so activating changes nothing for customers. Switch modules on under Dropshippers › Settings.
 
 == Changelog ==
+
+= 0.1.1 =
+* Checkout: billing stays the dropshipper's own (they pay, so it has to match their card) and the receipt goes to them; shipping is the chosen end customer. Each order to an end customer keeps a copy of that customer's details on the order (`_hph_bill_to`, read with `HPH_Checkout_Recipient::bill_to()` or the REST API) for the invoice and bill the CRM makes.
+* Checkout: a saved customer's delivery address is shown read-only under billing so the dropshipper can check it before paying (changes are made in My Customers).
+* Checkout (CartFlows modern layout): labels float on fields the script fills; no stale "required" error after switching from "New customer" to a saved customer.
 
 = 0.1.0 =
 * Core: dropshipper role and capabilities, database tables, settings, soft launch, "View as dropshipper" for admins, activity log.

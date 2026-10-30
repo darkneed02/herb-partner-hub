@@ -39,8 +39,8 @@ $hph_radio = static function ( string $value, string $title, string $detail, str
 				</span>
 			<?php endif; ?>
 		</legend>
-		<p class="hph-hint hph-recipient__billing" data-hph-billing-note hidden>
-			<?php esc_html_e( "Billing details use this customer's name, address and phone, as the customs declaration needs. Only the email stays yours.", 'herb-partner-hub' ); ?>
+		<p class="hph-hint hph-recipient__billing">
+			<?php esc_html_e( "Billing details stay yours, to match the card you pay with. Your customer's name, address and phone go on the parcel.", 'herb-partner-hub' ); ?>
 		</p>
 
 		<div class="hph-radio-list<?php echo count( $customers ) > 6 ? ' is-long' : ''; ?>">

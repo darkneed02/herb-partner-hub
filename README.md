@@ -7,7 +7,7 @@
 
 | | |
 |---|---|
-| เวอร์ชัน | 0.1.0 |
+| เวอร์ชัน | 0.1.1 |
 | ต้องการ | WordPress 6.5+, PHP 8.1+, WooCommerce 8.0+ |
 | รองรับ | HPOS (High-Performance Order Storage) และการเก็บออร์เดอร์แบบ posts table |
 
@@ -115,7 +115,7 @@ flowchart LR
 
 1. zip โฟลเดอร์ `herb-partner-hub/`
    ```sh
-   zip -r herb-partner-hub-0.1.0.zip herb-partner-hub -x '*.DS_Store'
+   zip -r herb-partner-hub-0.1.1.zip herb-partner-hub -x '*.DS_Store'
    ```
 2. ใน WordPress ไปที่ Plugins › Add New › Upload แล้วเลือกไฟล์ zip และกด Activate
 3. ไปที่ **Dropshippers › Settings** เปิดโมดูลที่ต้องการ แล้วใส่ user ID ของตัวแทนทดลองลงในรายชื่อ soft launch

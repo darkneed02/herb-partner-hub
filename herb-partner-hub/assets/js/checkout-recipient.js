@@ -1,8 +1,8 @@
 /* Herb Partner Hub — checkout "Ship this order to".
- * Fills WooCommerce's shipping_* and billing_* fields from the chosen saved customer (a
- * new customer's billing follows what is typed in the shipping form), and puts the
- * dropshipper's own billing back for "Ship to myself". billing_email is never touched.
- * The server copies the same addresses again on submit, so this script only keeps the
+ * Fills WooCommerce's shipping_* fields from the chosen saved customer and shows them
+ * read-only, so the dropshipper can check them before paying. Billing is the
+ * dropshipper's own (they pay, and the card checks compare it) and is never touched.
+ * The server copies the same address again on submit, so this script only keeps the
  * screen and the shipping price in step. update_checkout fires when the recipient
  * changes, never on page load. */
 ( function ( $ ) {
@@ -12,9 +12,9 @@
 	}
 
 	// CartFlows saves the checkout fields in localStorage and puts them back in its own
-	// DOM-ready callback. For a dropshipper the box owns the shipping and billing address,
-	// so an old shipping_* or billing_* value (often a different customer's, sometimes from
-	// another login on this browser) must not come back over the one the server rendered.
+	// DOM-ready callback. For a dropshipper the box owns the shipping address, so an old
+	// shipping_* value (often a different customer's) must not come back over the one the
+	// server rendered.
 	// This runs while the footer scripts load, before any DOM-ready callback.
 	( function () {
 		if ( ! document.getElementById( 'hph-recipient' ) ) {
@@ -26,7 +26,7 @@
 			if ( Array.isArray( saved ) ) {
 				window.localStorage.setItem( key, JSON.stringify( saved.filter( function ( f ) {
 					var n = f && typeof f.name === 'string' ? f.name : '';
-					return ! ( 0 === n.indexOf( 'shipping_' ) || ( 0 === n.indexOf( 'billing_' ) && 'billing_email' !== n ) );
+					return 0 !== n.indexOf( 'shipping_' );
 				} ) ) );
 			}
 		} catch ( e ) {}
@@ -38,7 +38,6 @@
 			return;
 		}
 		var book = ( window.hphRecipients && window.hphRecipients.book ) || {};
-		var own = ( window.hphRecipients && window.hphRecipients.self ) || {};
 		var mode = 'self';
 		var $form = $box.closest( 'form' );
 		var TEXT = [ 'first_name', 'last_name', 'company', 'address_1', 'address_2', 'city', 'postcode', 'phone' ];
@@ -51,10 +50,24 @@
 			return $( 'div.shipping_address' );
 		}
 
+		// CartFlows' modern layout floats a field's label once it has a value, by adding
+		// wcf-anim-label on its own input events. Values set here fire none, so set the class
+		// too, or a filled field shows no label. A value also clears any "required" error the
+		// field picked up while empty: "New customer" focuses the empty first name, so picking
+		// a saved customer next leaves WooCommerce's and CartFlows' error on a filled field.
 		function set( name, value, prefix ) {
 			var $f = $( '#' + ( prefix || 'shipping' ) + '_' + name );
-			if ( $f.length ) {
-				$f.val( value );
+			if ( ! $f.length ) {
+				return;
+			}
+			var filled = '' !== String( value );
+			var $row = $f.closest( '.form-row' );
+			$f.val( value );
+			$row.toggleClass( 'wcf-anim-label', filled );
+			if ( filled ) {
+				$row.removeClass( 'woocommerce-invalid woocommerce-invalid-required-field' )
+					.find( '.wcf-field-required-error, .checkout-inline-error-message' ).remove();
+				$f.removeClass( 'field-required' ).removeAttr( 'aria-invalid' );
 			}
 		}
 
@@ -63,15 +76,15 @@
 		}
 
 		// Country first: WooCommerce rebuilds the state field when the country changes.
-		function fillGroup( prefix, addr, done ) {
+		function fill( addr, done ) {
 			TEXT.forEach( function ( k ) {
-				set( k, addr[ k ] || '', prefix );
+				set( k, addr[ k ] || '' );
 			} );
-			var $country = $( '#' + prefix + '_country' );
+			var $country = $( '#shipping_country' );
 
 			function finish() {
-				set( 'state', addr.state || '', prefix );
-				$( '#' + prefix + '_state' ).trigger( 'change.select2' );
+				set( 'state', addr.state || '' );
+				$( '#shipping_state' ).trigger( 'change.select2' );
 				done();
 			}
 
@@ -83,30 +96,6 @@
 			}
 		}
 
-		// The customer's address goes into both the shipping and the billing fields.
-		function fill( addr, done ) {
-			fillGroup( 'shipping', addr, function () {
-				fillGroup( 'billing', addr, done );
-			} );
-		}
-
-		function readShipping() {
-			var addr = {};
-			TEXT.concat( [ 'country', 'state' ] ).forEach( function ( k ) {
-				addr[ k ] = $( '#shipping_' + k ).val() || '';
-			} );
-			return addr;
-		}
-
-		// Billing follows the recipient, so it is read-only while one is chosen: the server
-		// would replace any edit anyway. Change a saved customer in My Customers.
-		function lockBilling( on ) {
-			TEXT.forEach( function ( k ) {
-				$( '#billing_' + k ).prop( 'readonly', on );
-			} );
-			$box.find( '[data-hph-billing-note]' ).prop( 'hidden', ! on );
-		}
-
 		function show( value ) {
 			$box.find( '.hph-ro' ).each( function () {
 				var $l = $( this );
@@ -114,7 +103,11 @@
 			} );
 			$box.find( '[data-hph-save]' ).prop( 'hidden', 'new' !== value );
 			mode = ( '' === value || 'self' === value ) ? 'self' : ( 'new' === value ? 'new' : 'customer' );
-			lockBilling( 'self' !== mode );
+			// A saved customer's address is shown to check, not to edit: the server takes it
+			// from My Customers on submit whatever the form says.
+			TEXT.forEach( function ( k ) {
+				$( '#shipping_' + k ).prop( 'readonly', 'customer' === mode );
+			} );
 			$form.removeClass( 'hph-ship--self hph-ship--new hph-ship--customer' ).addClass( 'hph-ship--' + mode );
 		}
 
@@ -127,12 +120,11 @@
 			if ( 'self' === value ) {
 				$toggle().prop( 'checked', false );
 				$fields().hide();
-				fillGroup( 'billing', own, done );
+				done();
 			} else if ( 'new' === value ) {
 				$toggle().prop( 'checked', true );
 				TEXT.forEach( function ( k ) {
 					set( k, '' );
-					set( k, '', 'billing' );
 				} );
 				set( 'state', '' );
 				$fields().show();
@@ -140,30 +132,12 @@
 				$( '#shipping_first_name' ).trigger( 'focus' );
 			} else if ( book[ value ] ) {
 				$toggle().prop( 'checked', true );
-				$fields().hide();
+				$fields().show();
 				fill( book[ value ], done );
 			}
 		}
 
 		$form.addClass( 'hph-ship-managed' );
-
-		// New customer: what is typed into the delivery form is also the billing address.
-		$form.on( 'input change', '.shipping_address :input', function () {
-			if ( 'new' !== mode ) {
-				return;
-			}
-			var addr = readShipping();
-			if ( 'shipping_country' === this.id ) {
-				fillGroup( 'billing', addr, function () {} );
-			} else {
-				TEXT.forEach( function ( k ) {
-					set( k, addr[ k ], 'billing' );
-				} );
-				if ( $( '#billing_country' ).val() === addr.country ) {
-					set( 'state', addr.state, 'billing' );
-				}
-			}
-		} );
 
 		$box.on( 'change', 'input[name="hph_ship_to"]', function () {
 			apply( this.value, true );
@@ -182,10 +156,8 @@
 		} else if ( $box.is( '[data-hph-prefilled]' ) ) {
 			show( initial );
 			$toggle().prop( 'checked', true );
-			if ( 'new' === initial ) {
-				$fields().show();
-			} else {
-				$fields().hide();
+			$fields().show();
+			if ( 'new' !== initial ) {
 				// Fill again in case CartFlows restored older values from localStorage; this
 				// changes nothing (and so refreshes nothing) when the fields already match.
 				if ( book[ initial ] ) {
