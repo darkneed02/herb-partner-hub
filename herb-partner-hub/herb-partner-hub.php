@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Herb Partner Hub
  * Description: Dropshipper programme for WooCommerce: applications and approval, wholesale prices, and orders shipped straight to the dropshipper's own customers.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HPH_VERSION', '0.1.0' );
+define( 'HPH_VERSION', '0.1.1' );
 define( 'HPH_DB_VERSION', '1' );
 define( 'HPH_FILE', __FILE__ );
 define( 'HPH_PATH', plugin_dir_path( __FILE__ ) );
