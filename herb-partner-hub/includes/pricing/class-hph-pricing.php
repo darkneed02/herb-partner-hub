@@ -4,8 +4,8 @@
  *
  * For a dropshipper (hph_is_dropshipper()) on the storefront:
  * - participating products cost `_hph_price` everywhere (regular = price, no sale price),
- *   shown large in the accent colour with "Retail $X" struck through beside it, and a
- *   bar on every shop page says promotions, coupons and gifts do not apply
+ *   shown large in the accent colour on its own (no struck-through retail price, since
+ *   0.1.2), and a bar on every shop page says promotions, coupons and gifts do not apply
  * - every other product is hidden from listings and search, 404s on its own page, and
  *   cannot be bought, not even with a direct ?add-to-cart= link
  * Nobody else is affected, admins included (they use "View as dropshipper").
@@ -104,28 +104,23 @@ final class HPH_Pricing {
 		}
 
 		if ( $product->is_type( 'variable' ) ) {
-			$ws     = array();
-			$retail = array();
+			$ws = array();
 			foreach ( $product->get_children() as $child_id ) {
 				$child = wc_get_product( $child_id );
 				$price = $child ? HPH_Catalog::wholesale_price( $child ) : null;
 				if ( null !== $price ) {
-					$ws[]     = wc_get_price_to_display( $child, array( 'price' => $price ) );
-					$retail[] = wc_get_price_to_display( $child, array( 'price' => (float) $child->get_regular_price( 'edit' ) ) );
+					$ws[] = wc_get_price_to_display( $child, array( 'price' => $price ) );
 				}
 			}
-			return $ws ? self::price_markup( self::range( $ws ), self::range( $retail ), min( $ws ) < min( $retail ) ) : $html;
+			return $ws ? self::price_markup( self::range( $ws ) ) : $html;
 		}
 
 		$wholesale = HPH_Catalog::wholesale_price( $product );
 		if ( null === $wholesale ) {
 			return $html;
 		}
-		$retail = (float) $product->get_regular_price( 'edit' );
 		return self::price_markup(
-			wc_price( wc_get_price_to_display( $product, array( 'price' => $wholesale ) ) ) . $product->get_price_suffix(),
-			wc_price( wc_get_price_to_display( $product, array( 'price' => $retail ) ) ),
-			$retail > $wholesale
+			wc_price( wc_get_price_to_display( $product, array( 'price' => $wholesale ) ) ) . $product->get_price_suffix()
 		);
 	}
 
@@ -135,13 +130,12 @@ final class HPH_Pricing {
 		return $min === $max ? wc_price( $min ) : wc_format_price_range( $min, $max );
 	}
 
-	private static function price_markup( string $wholesale_html, string $retail_html, bool $show_retail ): string {
-		$html = '<span class="hph-price"><span class="hph-price__ws">' . $wholesale_html . '</span>';
-		if ( $show_retail ) {
-			/* translators: %s: retail price */
-			$html .= '<span class="hph-price__retail">' . sprintf( __( 'Retail %s', 'herb-partner-hub' ), $retail_html ) . '</span>';
-		}
-		return $html . '</span>';
+	/**
+	 * Dropshippers see only the price they pay. The retail price used to sit beside it,
+	 * struck through; removed in 0.1.2 so the old price never shows to them.
+	 */
+	private static function price_markup( string $wholesale_html ): string {
+		return '<span class="hph-price"><span class="hph-price__ws">' . $wholesale_html . '</span></span>';
 	}
 
 	public function enqueue(): void {

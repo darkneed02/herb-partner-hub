@@ -7,7 +7,7 @@
 
 | | |
 |---|---|
-| เวอร์ชัน | 0.1.1 |
+| เวอร์ชัน | 0.1.2 |
 | ต้องการ | WordPress 6.5+, PHP 8.1+, WooCommerce 8.0+ |
 | รองรับ | HPOS (High-Performance Order Storage) และการเก็บออร์เดอร์แบบ posts table |
 
@@ -53,7 +53,7 @@ flowchart LR
 | โมดูล | หน้าที่ |
 |---|---|
 | **applications** | ฟอร์มสมัคร `[herb_partner_apply]` (จำกัด 5 ครั้งต่อ IP ต่อชั่วโมง) หน้า Applications ให้แอดมินอนุมัติ / ขอข้อมูลเพิ่ม / ไม่อนุมัติ อีเมล WooCommerce 5 แบบ และลิงก์ตั้งรหัสผ่านอายุ 7 วันที่ล็อกอินให้ทันทีหลังตั้งรหัสเสร็จ |
-| **pricing** | ตั้งราคาส่ง (`_hph_price`) ได้ทั้งรายสินค้าและราย variation ตัวแทนจะเห็นราคาส่งพร้อมราคาปลีกแบบขีดฆ่า สินค้าที่ไม่ได้เปิดให้ตัวแทนจะถูกซ่อน เปิดหน้าสินค้าจะได้ 404 และซื้อไม่ได้แม้ใช้ลิงก์ `?add-to-cart=` ตรง ๆ มีหน้า Dropshippers › Products สำหรับแก้หลายรายการพร้อมกัน และ export/import CSV |
+| **pricing** | ตั้งราคาส่ง (`_hph_price`) ได้ทั้งรายสินค้าและราย variation ตัวแทนจะเห็นเฉพาะราคาส่ง (ไม่แสดงราคาปลีกขีดฆ่าตั้งแต่ 0.1.2) สินค้าที่ไม่ได้เปิดให้ตัวแทนจะถูกซ่อน เปิดหน้าสินค้าจะได้ 404 และซื้อไม่ได้แม้ใช้ลิงก์ `?add-to-cart=` ตรง ๆ มีหน้า Dropshippers › Products สำหรับแก้หลายรายการพร้อมกัน และ export/import CSV |
 | **discounts** | ไม่ให้โปรโมชันทุกแบบใช้กับตัวแทน ได้แก่ Stherb Promo Engine, Woo Discount Rules, Tier Pricing Table, คูปองของ WooCommerce และ Power Coupons |
 | **customers** | หน้า My Account › My Customers ให้ตัวแทนเก็บรายชื่อลูกค้าของตัวเอง แต่ละคนเห็นเฉพาะของตัวเอง ตอน checkout เลือกได้ว่า "Ship this order to" ลูกค้าที่บันทึกไว้ ลูกค้าใหม่ หรือตัวเอง แล้วเซิร์ฟเวอร์จะกรอกที่อยู่และเบอร์โทรให้ ชื่อและที่อยู่ billing จะเป็นของลูกค้าปลายทาง (ใช้ทำใบศุลกากร) แต่ billing email ยังเป็นของตัวแทน ใบเสร็จจึงส่งถึงตัวแทน และที่อยู่ในโปรไฟล์ของตัวแทนจะไม่ถูกเขียนทับ |
 | **orders** | แดชบอร์ดตัวแทนบนหน้าแรกของ My Account ประวัติออร์เดอร์ที่บอกว่าส่งให้ใคร เลข DHL tracking (อ่านจาก order notes) ตัวกรอง export CSV และปุ่ม Reorder ที่เลือกผู้รับคนเดิมให้ตอน checkout |
@@ -115,7 +115,7 @@ flowchart LR
 
 1. zip โฟลเดอร์ `herb-partner-hub/`
    ```sh
-   zip -r herb-partner-hub-0.1.1.zip herb-partner-hub -x '*.DS_Store'
+   zip -r herb-partner-hub-0.1.2.zip herb-partner-hub -x '*.DS_Store'
    ```
 2. ใน WordPress ไปที่ Plugins › Add New › Upload แล้วเลือกไฟล์ zip และกด Activate
 3. ไปที่ **Dropshippers › Settings** เปิดโมดูลที่ต้องการ แล้วใส่ user ID ของตัวแทนทดลองลงในรายชื่อ soft launch

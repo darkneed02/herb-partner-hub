@@ -223,9 +223,9 @@ if ( 'dropshipper' === $mode ) {
 	check( 'A not on sale', $a->is_on_sale(), false );
 	$html = $a->get_price_html();
 	check( 'A shows wholesale price large', str_contains( $html, 'hph-price__ws' ) && str_contains( $html, '30.00' ), true );
-	check( 'A shows "Retail" price struck through', str_contains( $html, 'hph-price__retail' ) && str_contains( $html, 'Retail' ) && str_contains( $html, '50.00' ), true );
+	check( 'A hides the old retail price (0.1.2)', str_contains( $html, 'hph-price__retail' ) || str_contains( $html, 'Retail' ) || str_contains( $html, '50.00' ), false );
 	$vhtml = $v->get_price_html();
-	check( 'V shows only priced variation (12) and its retail (20)', str_contains( $vhtml, '12.00' ) && str_contains( $vhtml, '20.00' ) && ! str_contains( $vhtml, '25.00' ), true );
+	check( 'V shows only priced variation (12), no retail (20)', str_contains( $vhtml, '12.00' ) && ! str_contains( $vhtml, '20.00' ) && ! str_contains( $vhtml, '25.00' ), true );
 	check( 'B not purchasable', $b->is_purchasable(), false );
 	check( 'B not visible', $b->is_visible(), false );
 	check( 'B cannot be added (direct add-to-cart)', $added_b, false );
